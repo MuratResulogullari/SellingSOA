@@ -1,10 +1,5 @@
 ﻿using EventBus.Base.Abstraction;
 using EventBus.Base.Events;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EventBus.Base.SubManagers
 {
@@ -14,15 +9,20 @@ namespace EventBus.Base.SubManagers
         private readonly List<Type> _eventTypes;
 
         public event EventHandler<string> OnEventRemoved;
+
         public Func<string, string> eventNameGetter;
-        public InMemoryEventBusSubscriptionManager(Func<string,string> eventNameGetter)
+
+        public InMemoryEventBusSubscriptionManager(Func<string, string> eventNameGetter)
         {
             _handlers = new Dictionary<string, List<SubscriptionInfo>>();
             _eventTypes = new List<Type>();
             this.eventNameGetter = eventNameGetter;
         }
+
         public bool IsEmpty => !_handlers.Keys.Any();
-        public void Clear()=> _handlers.Clear();
+
+        public void Clear() => _handlers.Clear();
+
         public void AddSubscription<T, TH>()
             where T : IntegrationEvent
             where TH : IIntegrationEventHandler<T>
@@ -33,7 +33,8 @@ namespace EventBus.Base.SubManagers
             {
                 _eventTypes.Add(typeof(T));
             }
-        }       
+        }
+
         public string GetEventKey<T>()
         {
             string eventName = typeof(T).Name;
@@ -44,7 +45,7 @@ namespace EventBus.Base.SubManagers
 
         public IEnumerable<SubscriptionInfo> GetHandlersForEvent<T>() where T : IntegrationEvent
         {
-           var key=GetEventKey<T>();
+            var key = GetEventKey<T>();
             return GetHandlersForEvent(key);
         }
 
@@ -64,43 +65,46 @@ namespace EventBus.Base.SubManagers
         {
             var handlerToRemove = FindSubscriptionToRemove<T, TH>();
             var eventName = GetEventKey<T>();
-            RemoveHandler(eventName,handlerToRemove);
-
+            RemoveHandler(eventName, handlerToRemove);
         }
-        private void RemoveHandler(string eventName,SubscriptionInfo subscriptionInfo)
+
+        private void RemoveHandler(string eventName, SubscriptionInfo subscriptionInfo)
         {
-            if (subscriptionInfo !=null)
+            if (subscriptionInfo != null)
             {
                 _handlers[eventName].Remove(subscriptionInfo);
                 if (!_handlers[eventName].Any())
                 {
                     _handlers.Remove(eventName);
-                    var eventType = _eventTypes.SingleOrDefault(x=>x.Name==eventName);
+                    var eventType = _eventTypes.SingleOrDefault(x => x.Name == eventName);
                     if (eventType != null)
                     {
                         _eventTypes.Remove(eventType);
                     }
                     RaiseOnEventRemoved(eventName);
-
                 }
             }
         }
+
         private void RaiseOnEventRemoved(string eventName)
         {
             var handler = OnEventRemoved;
             handler?.Invoke(this, eventName);
         }
-        private SubscriptionInfo FindSubscriptionToRemove<T,TH>()where T: IntegrationEvent where TH:IIntegrationEventHandler<T>
+
+        private SubscriptionInfo FindSubscriptionToRemove<T, TH>() where T : IntegrationEvent where TH : IIntegrationEventHandler<T>
         {
-          var  eventName =GetEventKey<T>();
+            var eventName = GetEventKey<T>();
             return FindSubscriptionToRemove(eventName, typeof(TH));
         }
-        private SubscriptionInfo FindSubscriptionToRemove(string eventName,Type handlerType)
+
+        private SubscriptionInfo FindSubscriptionToRemove(string eventName, Type handlerType)
         {
             if (!HasSubscriptionsForEvent(eventName))
                 return null;
             return _handlers[eventName].SingleOrDefault(x => x.HandlerType == handlerType);
         }
+
         private void AddSubscription(Type handlerType, string eventName)
         {
             if (!HasSubscriptionsForEvent(eventName))
@@ -112,7 +116,6 @@ namespace EventBus.Base.SubManagers
                 throw new ArgumentException($"Hadler Type {handlerType.Name}  already registered for '{eventName}'", nameof(handlerType));
             }
             _handlers[eventName].Add(SubscriptionInfo.Typed(handlerType));
-
         }
     }
 }
