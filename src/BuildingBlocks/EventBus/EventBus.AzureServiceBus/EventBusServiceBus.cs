@@ -54,13 +54,13 @@ namespace EventBus.AzureServiceBus
         {
             string eventName = typeof(T).Name;
             eventName = ProcessEventName(eventName);
-            if (!eventBusSubscriptionManager.HasSubscriptionsForEvent(eventName))
+            if (!SubscriptionManager.HasSubscriptionsForEvent(eventName))
             {
                 var subscriptionClient = CreateSubscriptionClientIfNotExists(eventName);
                 RegisterSubscriptionClientMessageHandler(subscriptionClient);
             }
             _logger.LogInformation("Subscribing to event {EventName} with {EventHandler}", eventName, typeof(TH).Name);
-            eventBusSubscriptionManager.AddSubscription<T, TH>();
+            SubscriptionManager.AddSubscription<T, TH>();
         }
 
         public override void UnSubscibe<T, TH>()
@@ -79,7 +79,7 @@ namespace EventBus.AzureServiceBus
                 _logger.LogWarning("The messasging entity {eventName} Could not be found.", eventName);
             }
             _logger.LogInformation("Unsubscribing from event {EventName}", eventName);
-            eventBusSubscriptionManager.RemoveSubscription<T, TH>();
+            SubscriptionManager.RemoveSubscription<T, TH>();
         }
 
         private void RegisterSubscriptionClientMessageHandler(ISubscriptionClient subscriptionClient)
